@@ -1,0 +1,34 @@
+---
+# create stack 
+- hosts: webserver
+  become: true
+  tasks:
+  - name: install apache2, mod-wsgi, pip, python-virtualenv, start apache2
+    - apt: name={{item}} state=present update_cache=true
+      with_items:
+       - apache2
+       - libapache2-mod-wsgi
+       - python-pip
+       - python-virtualenv
+    - service: name=apache2 enabled=true state=started
+
+   - name: enable mod_wsgi (a2enmod)
+     apache2_module: state=present name=wsgi
+     notify: apache2 restart
+
+   handlers:
+   - name: apache2 restart
+     service: name=apache2 state=restarted
+
+
+- hosts: database
+  become: true
+  tasks:
+    - apt: name=mysql-server update_cache=true
+    - service: name=mysql enabled=true state=started
+
+- hosts: loadbalancer
+  become: true
+  tasks:
+    - apt: name=nginx
+    - service: name=nginx enabled=true state=started
